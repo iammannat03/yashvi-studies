@@ -1,4 +1,4 @@
-import { copy, del, get, head, list, put } from "@vercel/blob";
+import { copy, createFolder, del, get, head, list, put } from "@vercel/blob";
 import {
   blobPathToRelative,
   isHiddenBlobName,
@@ -71,11 +71,7 @@ export async function blobCreateDirectory(
   name: string,
 ): Promise<void> {
   const folderPath = joinPath(parentPath, name);
-  await put(`${toBlobPath(folderPath)}/.keep`, "", {
-    access: BLOB_ACCESS,
-    addRandomSuffix: false,
-    allowOverwrite: true,
-  });
+  await createFolder(`${toBlobPath(folderPath)}/`, { access: BLOB_ACCESS });
 }
 
 export async function blobSaveFile(
