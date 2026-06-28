@@ -115,7 +115,7 @@ async function blobCopyPath(fromRelative: string, toRelative: string) {
 async function blobMoveDirectory(fromRelative: string, toRelative: string) {
   const fromPrefix = `${toBlobPath(fromRelative)}/`;
   const toPrefix = `${toBlobPath(toRelative)}/`;
-  const { blobs } = await list({ prefix: fromPrefix, mode: "flat" });
+  const { blobs } = await list({ prefix: fromPrefix, mode: "expanded" });
 
   for (const blob of blobs) {
     const suffix = blob.pathname.slice(fromPrefix.length);
