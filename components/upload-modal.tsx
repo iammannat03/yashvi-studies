@@ -96,7 +96,7 @@ function UploadDropzone({
   return (
     <>
       <div
-        className={`neo-dropzone flex cursor-pointer flex-col items-center gap-3 rounded-lg px-6 py-10 ${dragging ? "neo-dropzone-active" : ""}`}
+        className={`neo-dropzone flex cursor-pointer flex-col items-center gap-3 rounded-lg px-4 py-8 sm:px-6 sm:py-10 ${dragging ? "neo-dropzone-active" : ""}`}
         onDragOver={(e) => {
           e.preventDefault();
           setDragging(true);
@@ -215,17 +215,20 @@ export function UploadModal({
   return (
     <Dialog
       open={open}
+      modal="trap-focus"
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
     >
       <DialogContent
-        className={`neo-card neo-dialog-content rounded-xl border-2 border-foreground shadow-[4px_4px_0_0_#0a0a0a] ${
+        scrollable
+        className={`neo-card w-[calc(100%-1rem)] rounded-xl border-2 border-foreground shadow-[4px_4px_0_0_#0a0a0a] sm:w-full ${
           mode === "generate" && step === 2
             ? "max-w-2xl sm:max-w-2xl"
             : "max-w-lg sm:max-w-lg"
         }`}
       >
+        <div className="neo-dialog-content-scrollable">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Upload HTML</DialogTitle>
           <DialogDescription>
@@ -240,10 +243,10 @@ export function UploadModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-2 rounded-lg border-2 border-foreground bg-muted p-1">
+        <div className="flex flex-col gap-2 rounded-lg border-2 border-foreground bg-muted p-1 sm:flex-row">
           <button
             type="button"
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+            className={`flex-1 rounded-md px-2 py-2.5 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
               mode === "generate"
                 ? "bg-primary text-foreground shadow-[2px_2px_0_0_#0a0a0a]"
                 : "text-muted-foreground hover:text-foreground"
@@ -254,7 +257,7 @@ export function UploadModal({
           </button>
           <button
             type="button"
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+            className={`flex-1 rounded-md px-2 py-2.5 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
               mode === "direct"
                 ? "bg-primary text-foreground shadow-[2px_2px_0_0_#0a0a0a]"
                 : "text-muted-foreground hover:text-foreground"
@@ -328,8 +331,8 @@ export function UploadModal({
                       setForm((f) => ({ ...f, syllabus: e.target.value }))
                     }
                     placeholder={`e.g.\nNationalism in India (History)\nDevelopment (Economics)\nResources and Development (Geography)\nPower Sharing (Civics)`}
-                    rows={6}
-                    className="neo-input w-full resize-y rounded-lg px-3 py-2 text-sm"
+                    rows={5}
+                    className="neo-input max-h-36 w-full resize-y overflow-y-auto rounded-lg px-3 py-2 text-sm sm:max-h-48"
                   />
                 </div>
                 <div className="neo-dialog-actions">
@@ -411,8 +414,8 @@ export function UploadModal({
                     id="prompt-preview"
                     readOnly
                     value={prompt}
-                    rows={10}
-                    className="neo-input w-full resize-y rounded-lg px-3 py-2 font-mono text-xs leading-relaxed"
+                    rows={8}
+                    className="neo-input max-h-48 w-full resize-y overflow-y-auto rounded-lg px-3 py-2 font-mono text-xs leading-relaxed sm:max-h-72"
                     onClick={(e) => e.currentTarget.select()}
                   />
                 </div>
@@ -494,6 +497,7 @@ export function UploadModal({
             </Button>
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

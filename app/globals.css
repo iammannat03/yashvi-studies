@@ -147,11 +147,52 @@
   background-size: 24px 24px;
 }
 
+.neo-dialog-viewport {
+  padding: 0.75rem;
+}
+
+.neo-dialog-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
 .neo-dialog-content {
-  overflow: visible;
-  padding: 1.5rem;
-  padding-bottom: 1.75rem;
-  padding-right: 1.75rem;
+  padding: 1.25rem;
+  padding-bottom: 1.5rem;
+  padding-right: 2.25rem;
+}
+
+.neo-dialog-content-scrollable {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  padding-bottom: 1.5rem;
+  padding-right: 2.25rem;
+}
+
+@media (min-width: 640px) {
+  .neo-dialog-viewport {
+    padding: 1rem;
+  }
+
+  .neo-dialog-content {
+    padding: 1.5rem;
+    padding-bottom: 1.75rem;
+    padding-right: 2.5rem;
+  }
+
+  .neo-dialog-content-scrollable {
+    gap: 1rem;
+    padding: 1.5rem;
+    padding-bottom: 1.75rem;
+    padding-right: 2.5rem;
+  }
 }
 
 .neo-dialog-actions {
