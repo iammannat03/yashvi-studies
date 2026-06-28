@@ -1,26 +1,181 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fffdf5;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #ffe500;
+  --primary-foreground: #0a0a0a;
+  --secondary: #c4f0ff;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f0ede4;
+  --muted-foreground: #525252;
+  --accent: #ffc8e8;
+  --accent-foreground: #0a0a0a;
+  --destructive: #ff4444;
+  --border: #0a0a0a;
+  --input: #0a0a0a;
+  --ring: #0a0a0a;
+  --radius: 0.5rem;
+  --neo-shadow: 4px 4px 0 0 #0a0a0a;
+  --neo-shadow-sm: 2px 2px 0 0 #0a0a0a;
 }
 
 @theme inline {
+  --font-sans: var(--font-sans);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 
-body {
-  background: var(--background);
+.neo-card {
+  border: 2px solid var(--foreground);
+  background: var(--card);
+  box-shadow: var(--neo-shadow);
+}
+
+.neo-btn {
+  border: 2px solid var(--foreground);
+  font-weight: 600;
+  box-shadow: var(--neo-shadow);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.neo-btn:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: var(--neo-shadow-sm);
+}
+
+.neo-btn:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+.neo-btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.neo-btn-secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.neo-btn-outline {
+  background: var(--card);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+.neo-input {
+  border: 2px solid var(--foreground);
+  background: var(--card);
+  box-shadow: var(--neo-shadow-sm);
+}
+
+.neo-input:focus {
+  outline: none;
+  box-shadow: var(--neo-shadow);
+}
+
+.neo-select-trigger {
+  width: 100%;
+  height: 2.5rem;
+  border: 2px solid var(--foreground) !important;
+  background: var(--card) !important;
+  box-shadow: var(--neo-shadow-sm);
+  border-radius: var(--radius);
+}
+
+.neo-select-content {
+  border: 2px solid var(--foreground) !important;
+  box-shadow: var(--neo-shadow) !important;
+  border-radius: var(--radius) !important;
+}
+
+.neo-dropzone {
+  border: 2px dashed var(--foreground);
+  background: var(--muted);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.neo-dropzone-active {
+  background: var(--accent);
+  box-shadow: var(--neo-shadow-sm);
+}
+
+.neo-page-bg {
+  background-color: var(--background);
+  background-image: radial-gradient(circle at 1px 1px, #0a0a0a08 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.neo-dialog-content {
+  overflow: visible;
+  padding: 1.5rem;
+  padding-bottom: 1.75rem;
+  padding-right: 1.75rem;
+}
+
+.neo-dialog-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .neo-dialog-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+  }
+}
+
+.neo-dialog-actions .neo-btn {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .neo-dialog-actions .neo-btn {
+    width: auto;
+    min-width: 5.5rem;
+  }
 }
