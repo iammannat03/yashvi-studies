@@ -24,18 +24,16 @@ import { localPublicUrl } from "@/lib/storage/paths";
 import type { FileItem } from "@/lib/storage/types";
 
 export function useBlobStorage(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  // Vercel deployments cannot write to the local filesystem.
+  if (process.env.VERCEL === "1") return true;
+
+  return Boolean(
+    process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID,
+  );
 }
 
 export async function ensureStorageReady(): Promise<void> {
   if (useBlobStorage()) return;
-
-  if (process.env.VERCEL) {
-    throw new Error(
-      "File storage is not configured. Add a Vercel Blob store to this project.",
-    );
-  }
-
   await localEnsureRoot();
 }
 
