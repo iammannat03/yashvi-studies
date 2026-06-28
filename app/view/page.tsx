@@ -8,12 +8,22 @@ import {
 } from "@/lib/uploads";
 
 type ViewPageProps = {
-  params: Promise<{ path: string[] }>;
+  searchParams: Promise<{ path?: string }>;
 };
 
-export default async function ViewPage({ params }: ViewPageProps) {
-  const { path: pathSegments } = await params;
-  const relativePath = pathSegments.join("/");
+export default async function ViewPage({ searchParams }: ViewPageProps) {
+  const { path: pathParam } = await searchParams;
+
+  if (!pathParam) {
+    notFound();
+  }
+
+  let relativePath: string;
+  try {
+    relativePath = decodeURIComponent(pathParam);
+  } catch {
+    notFound();
+  }
 
   let validatedPath: string;
   try {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FolderIcon, FileIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { formatPathForDisplay, stripHtmlExtension } from "@/lib/file-names";
+import { buildViewUrl, formatPathForDisplay, stripHtmlExtension } from "@/lib/file-names";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -83,7 +83,8 @@ export function FileBrowser() {
     try {
       const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`);
       const data: ListResponse = await res.json();
-      if (!res.ok) throw new Error((data as { error?: string }).error ?? "Failed to load");
+      if (!res.ok)
+        throw new Error((data as { error?: string }).error ?? "Failed to load");
       setCurrentPath(data.path);
       setItems(data.items);
     } catch (err) {
@@ -248,7 +249,10 @@ export function FileBrowser() {
       </div>
 
       <p className="mb-4 text-sm text-muted-foreground">
-        Current folder: <span className="font-semibold text-foreground">{formatPath(currentPath)}</span>
+        Current folder:{" "}
+        <span className="font-semibold text-foreground">
+          {formatPath(currentPath)}
+        </span>
       </p>
 
       {error && (
@@ -262,7 +266,9 @@ export function FileBrowser() {
       ) : items.length === 0 ? (
         <div className="neo-card rounded-xl py-16 text-center text-muted-foreground">
           <p className="font-medium text-foreground">This folder is empty</p>
-          <p className="mt-1 text-sm">Upload an HTML file or create a folder to get started.</p>
+          <p className="mt-1 text-sm">
+            Upload an HTML file or create a folder to get started.
+          </p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -282,9 +288,14 @@ export function FileBrowser() {
                     className="group flex flex-1 items-start gap-4 text-left"
                     onClick={() => setCurrentPath(itemPath)}
                   >
-                    <FolderIcon className="size-8 shrink-0 text-primary" strokeWidth={2.5} />
+                    <FolderIcon
+                      className="size-8 shrink-0 text-primary"
+                      strokeWidth={2.5}
+                    />
                     <div>
-                      <p className="font-semibold group-hover:underline">{item.name}</p>
+                      <p className="font-semibold group-hover:underline">
+                        {item.name}
+                      </p>
                       <p className="text-sm text-muted-foreground">Folder</p>
                     </div>
                   </button>
@@ -292,7 +303,9 @@ export function FileBrowser() {
                     variant="outline"
                     size="sm"
                     className="neo-btn neo-btn-outline shrink-0 rounded-lg"
-                    onClick={() => openRenameDialog(itemPath, item.name, "directory")}
+                    onClick={() =>
+                      openRenameDialog(itemPath, item.name, "directory")
+                    }
                   >
                     Rename
                   </Button>
@@ -306,15 +319,20 @@ export function FileBrowser() {
                 className="neo-card flex items-start justify-between gap-3 rounded-xl p-5"
               >
                 <Link
-                  href={`/view/${itemPath.split("/").map(encodeURIComponent).join("/")}`}
+                  href={buildViewUrl(itemPath)}
                   className="flex flex-1 items-start gap-4"
                 >
-                  <FileIcon className="size-8 shrink-0 text-secondary-foreground" strokeWidth={2.5} />
+                  <FileIcon
+                    className="size-8 shrink-0 text-secondary-foreground"
+                    strokeWidth={2.5}
+                  />
                   <div>
                     <p className="font-semibold hover:underline">
                       {stripHtmlExtension(item.name)}
                     </p>
-                    <p className="text-sm text-muted-foreground">{formatSize(item.size)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatSize(item.size)}
+                    </p>
                   </div>
                 </Link>
                 <div className="flex shrink-0 flex-col gap-2">
@@ -322,7 +340,9 @@ export function FileBrowser() {
                     variant="outline"
                     size="sm"
                     className="neo-btn neo-btn-outline rounded-lg"
-                    onClick={() => openRenameDialog(itemPath, item.name, "file")}
+                    onClick={() =>
+                      openRenameDialog(itemPath, item.name, "file")
+                    }
                   >
                     Rename
                   </Button>
@@ -390,7 +410,10 @@ export function FileBrowser() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!moveTarget} onOpenChange={(open) => !open && setMoveTarget(null)}>
+      <Dialog
+        open={!!moveTarget}
+        onOpenChange={(open) => !open && setMoveTarget(null)}
+      >
         <DialogContent className="neo-card neo-dialog-content max-w-md rounded-xl border-2 border-foreground shadow-[4px_4px_0_0_#0a0a0a] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">Move File</DialogTitle>
@@ -407,7 +430,10 @@ export function FileBrowser() {
               value={selectedDest}
               onValueChange={(v) => setSelectedDest(v ?? ROOT_VALUE)}
             >
-              <SelectTrigger id="dest-folder" className="neo-select-trigger w-full">
+              <SelectTrigger
+                id="dest-folder"
+                className="neo-select-trigger w-full"
+              >
                 <SelectValue placeholder="Select a folder" />
               </SelectTrigger>
               <SelectContent className="neo-select-content">
@@ -441,7 +467,10 @@ export function FileBrowser() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <DialogContent className="neo-card neo-dialog-content max-w-md rounded-xl border-2 border-foreground shadow-[4px_4px_0_0_#0a0a0a] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">Delete File</DialogTitle>
@@ -490,9 +519,7 @@ export function FileBrowser() {
             <DialogDescription className="break-all">
               Renaming{" "}
               <span className="font-semibold text-foreground">
-                {renameTarget
-                  ? formatPathForDisplay(renameTarget.path)
-                  : ""}
+                {renameTarget ? formatPathForDisplay(renameTarget.path) : ""}
               </span>
             </DialogDescription>
           </DialogHeader>
@@ -503,16 +530,13 @@ export function FileBrowser() {
               value={renameName}
               onChange={(e) => setRenameName(e.target.value)}
               placeholder={
-                renameTarget?.type === "directory" ? "e.g. SST Notes" : "e.g. My Notes"
+                renameTarget?.type === "directory"
+                  ? "e.g. SST Notes"
+                  : "e.g. My Notes"
               }
               className="neo-input h-10 rounded-lg"
               onKeyDown={(e) => e.key === "Enter" && renameItem()}
             />
-            {renameTarget?.type === "file" && (
-              <p className="text-xs text-muted-foreground">
-                .html will be added automatically
-              </p>
-            )}
           </div>
           <div className="neo-dialog-actions">
             <Button

@@ -45,3 +45,7 @@ export function formatPathForDisplay(relativePath: string): string {
 
   return parts.join("/");
 }
+
+export function buildViewUrl(relativePath: string): string {
+  return `/view?path=${encodeURIComponent(relativePath)}`;
+}
