@@ -20,7 +20,7 @@ import {
 import type { FileItem } from "@/lib/storage/types";
 
 export type { FileItem };
-export { getStoredFileUrl as getFilePublicUrl, ensureStorageReady as ensureUploadsRoot };
+export { getStoredFileUrl as getFilePublicUrl, getStoredFileContent as getFileContent, ensureStorageReady as ensureUploadsRoot };
 export { normalizeRelativePath, joinPath } from "@/lib/storage/paths";
 export { UPLOADS_ROOT } from "@/lib/storage/paths";
 

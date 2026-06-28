@@ -110,6 +110,10 @@ export async function localFileExists(relativePath: string): Promise<boolean> {
   }
 }
 
+export async function localGetFileContent(relativePath: string): Promise<Buffer> {
+  return fs.readFile(resolveUploadPath(relativePath));
+}
+
 export async function localGetEntryType(
   relativePath: string,
 ): Promise<"file" | "directory"> {

@@ -1,4 +1,4 @@
-import { copy, del, head, list, put } from "@vercel/blob";
+import { copy, del, get, head, list, put } from "@vercel/blob";
 import {
   blobPathToRelative,
   isHiddenBlobName,
@@ -8,6 +8,8 @@ import {
   toBlobPath,
 } from "@/lib/storage/paths";
 import type { FileItem } from "@/lib/storage/types";
+
+const BLOB_ACCESS = "private" as const;
 
 async function blobExists(pathname: string): Promise<boolean> {
   try {
@@ -70,7 +72,7 @@ export async function blobCreateDirectory(
 ): Promise<void> {
   const folderPath = joinPath(parentPath, name);
   await put(`${toBlobPath(folderPath)}/.keep`, "", {
-    access: "public",
+    access: BLOB_ACCESS,
     addRandomSuffix: false,
     allowOverwrite: true,
   });
@@ -81,7 +83,7 @@ export async function blobSaveFile(
   relativePath: string,
 ): Promise<void> {
   await put(toBlobPath(relativePath), buffer, {
-    access: "public",
+    access: BLOB_ACCESS,
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "text/html",
@@ -93,8 +95,24 @@ export async function blobDeleteFile(relativePath: string): Promise<void> {
 }
 
 export async function blobGetFileUrl(relativePath: string): Promise<string> {
-  const metadata = await head(toBlobPath(relativePath));
-  return metadata.url;
+  return `/api/files/content?path=${encodeURIComponent(relativePath)}`;
+}
+
+export async function blobGetFileContent(relativePath: string): Promise<Buffer> {
+  const result = await get(toBlobPath(relativePath), { access: BLOB_ACCESS });
+  if (!result || result.statusCode !== 200 || !result.stream) {
+    throw new Error("File not found");
+  }
+
+  const chunks: Uint8Array[] = [];
+  const reader = result.stream.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) chunks.push(value);
+  }
+
+  return Buffer.concat(chunks);
 }
 
 export async function blobFileExists(relativePath: string): Promise<boolean> {
@@ -106,7 +124,7 @@ async function blobCopyPath(fromRelative: string, toRelative: string) {
   const toPathname = toBlobPath(toRelative);
   const source = await head(fromPathname);
   await copy(source.url, toPathname, {
-    access: "public",
+    access: BLOB_ACCESS,
     addRandomSuffix: false,
   });
   await del(fromPathname);
@@ -121,7 +139,7 @@ async function blobMoveDirectory(fromRelative: string, toRelative: string) {
     const suffix = blob.pathname.slice(fromPrefix.length);
     const newPathname = `${toPrefix}${suffix}`;
     await copy(blob.url, newPathname, {
-      access: "public",
+      access: BLOB_ACCESS,
       addRandomSuffix: false,
     });
     await del(blob.pathname);

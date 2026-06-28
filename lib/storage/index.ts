@@ -4,6 +4,7 @@ import {
   blobFileExists,
   blobGetAllDirectories,
   blobGetEntryType,
+  blobGetFileContent,
   blobGetFileUrl,
   blobListDirectory,
   blobMoveEntry,
@@ -15,6 +16,7 @@ import {
   localEnsureRoot,
   localFileExists,
   localGetAllDirectories,
+  localGetFileContent,
   localGetEntryType,
   localListDirectory,
   localMoveEntry,
@@ -79,6 +81,11 @@ export async function storedFileExists(relativePath: string): Promise<boolean> {
 export async function getStoredFileUrl(relativePath: string): Promise<string> {
   if (useBlobStorage()) return blobGetFileUrl(relativePath);
   return localPublicUrl(relativePath);
+}
+
+export async function getStoredFileContent(relativePath: string): Promise<Buffer> {
+  if (useBlobStorage()) return blobGetFileContent(relativePath);
+  return localGetFileContent(relativePath);
 }
 
 export async function getEntryType(
