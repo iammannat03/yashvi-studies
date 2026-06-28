@@ -6,6 +6,7 @@ import {
   ensureStorageReady,
   getAllDirectories,
   getEntryType,
+  getStoredFileContent,
   getStoredFileUrl,
   listDirectory,
   moveEntry,
