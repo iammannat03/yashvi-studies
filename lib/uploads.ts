@@ -1,38 +1,30 @@
-import fs from "fs/promises";
 import path from "path";
 import { toStoredHtmlFileName } from "@/lib/file-names";
+import {
+  createDirectory,
+  deleteStoredFile,
+  ensureStorageReady,
+  getAllDirectories,
+  getEntryType,
+  getStoredFileUrl,
+  listDirectory,
+  moveEntry,
+  saveStoredFile,
+  storedFileExists,
+} from "@/lib/storage";
+import {
+  joinPath,
+  normalizeRelativePath,
+  parentPath,
+} from "@/lib/storage/paths";
+import type { FileItem } from "@/lib/storage/types";
 
-export const UPLOADS_ROOT = path.join(process.cwd(), "public/uploads");
+export type { FileItem };
+export { getStoredFileUrl as getFilePublicUrl, ensureStorageReady as ensureUploadsRoot };
+export { normalizeRelativePath, joinPath } from "@/lib/storage/paths";
+export { UPLOADS_ROOT } from "@/lib/storage/paths";
+
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-
-export type FileItem = {
-  name: string;
-  type: "file" | "directory";
-  size?: number;
-  updatedAt?: string;
-};
-
-function normalizeRelativePath(relativePath: string): string {
-  return relativePath
-    .replace(/\\/g, "/")
-    .split("/")
-    .filter((segment) => segment && segment !== ".")
-    .join("/");
-}
-
-export function resolveUploadPath(relativePath = ""): string {
-  const normalized = normalizeRelativePath(relativePath);
-  const resolved = path.resolve(UPLOADS_ROOT, normalized);
-
-  if (
-    resolved !== UPLOADS_ROOT &&
-    !resolved.startsWith(UPLOADS_ROOT + path.sep)
-  ) {
-    throw new Error("Invalid path");
-  }
-
-  return resolved;
-}
 
 export function isHtmlFile(name: string): boolean {
   return name.toLowerCase().endsWith(".html");
@@ -54,86 +46,19 @@ export function isValidHtmlFileName(name: string): boolean {
   return isHtmlFile(base) && isValidEntryName(base);
 }
 
-export async function ensureUploadsRoot(): Promise<void> {
-  await fs.mkdir(UPLOADS_ROOT, { recursive: true });
-}
-
-export async function listDirectory(relativePath = ""): Promise<{
-  path: string;
-  items: FileItem[];
-}> {
-  const dirPath = resolveUploadPath(relativePath);
-  const entries = await fs.readdir(dirPath, { withFileTypes: true });
-
-  const items: FileItem[] = [];
-
-  for (const entry of entries) {
-    if (entry.name.startsWith(".") || entry.name === ".gitkeep") continue;
-
-    const entryPath = path.join(dirPath, entry.name);
-    const stat = await fs.stat(entryPath);
-
-    if (entry.isDirectory()) {
-      items.push({
-        name: entry.name,
-        type: "directory",
-        updatedAt: stat.mtime.toISOString(),
-      });
-    } else if (entry.isFile() && isHtmlFile(entry.name)) {
-      items.push({
-        name: entry.name,
-        type: "file",
-        size: stat.size,
-        updatedAt: stat.mtime.toISOString(),
-      });
-    }
-  }
-
-  items.sort((a, b) => {
-    if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  });
-
-  return { path: normalizeRelativePath(relativePath), items };
-}
-
-export async function createDirectory(
-  parentPath: string,
-  name: string,
-): Promise<void> {
-  if (!isValidFolderName(name)) {
-    throw new Error("Invalid folder name");
-  }
-
-  const dirPath = resolveUploadPath(
-    parentPath ? `${parentPath}/${name}` : name,
-  );
-  await fs.mkdir(dirPath, { recursive: false });
-}
-
-export async function moveEntry(from: string, to: string): Promise<void> {
-  const fromPath = resolveUploadPath(from);
-  const toPath = resolveUploadPath(to);
-
-  await fs.access(fromPath);
-  await fs.mkdir(path.dirname(toPath), { recursive: true });
-  await fs.rename(fromPath, toPath);
-}
+export {
+  createDirectory,
+  getAllDirectories,
+  listDirectory,
+  moveEntry,
+};
 
 export async function deleteFile(relativePath: string): Promise<void> {
   const normalized = normalizeRelativePath(relativePath);
   if (!isHtmlFile(normalized)) {
     throw new Error("Only HTML files can be deleted");
   }
-
-  const filePath = resolveUploadPath(normalized);
-  const stat = await fs.stat(filePath);
-
-  if (!stat.isFile()) {
-    throw new Error("Not a file");
-  }
-
-  await fs.unlink(filePath);
+  await deleteStoredFile(normalized);
 }
 
 export async function renameEntry(
@@ -141,34 +66,26 @@ export async function renameEntry(
   newName: string,
 ): Promise<string> {
   const normalized = normalizeRelativePath(relativePath);
-  const fromPath = resolveUploadPath(normalized);
-  const stat = await fs.stat(fromPath);
-  const safeNewName = stat.isFile()
-    ? toStoredHtmlFileName(newName)
-    : path.basename(newName.trim());
+  const entryType = await getEntryType(normalized);
+  const safeNewName =
+    entryType === "file"
+      ? toStoredHtmlFileName(newName)
+      : path.basename(newName.trim());
 
   if (!safeNewName) {
     throw new Error("Name is required");
   }
 
-  if (stat.isFile()) {
+  if (entryType === "file") {
     if (!isValidHtmlFileName(safeNewName)) {
       throw new Error("Invalid file name");
     }
-  } else if (stat.isDirectory()) {
-    if (!isValidFolderName(safeNewName)) {
-      throw new Error("Folder name cannot contain / or \\");
-    }
-  } else {
-    throw new Error("Unsupported entry type");
+  } else if (!isValidFolderName(safeNewName)) {
+    throw new Error("Folder name cannot contain / or \\");
   }
 
-  const parentRelative = normalized.includes("/")
-    ? normalized.slice(0, normalized.lastIndexOf("/"))
-    : "";
-  const toRelative = parentRelative
-    ? `${parentRelative}/${safeNewName}`
-    : safeNewName;
+  const parent = parentPath(normalized);
+  const toRelative = joinPath(parent, safeNewName);
 
   if (toRelative === normalized) {
     return normalized;
@@ -196,48 +113,15 @@ export async function saveUploadedFile(
     throw new Error("File too large");
   }
 
-  let targetDir = resolveUploadPath(subPath);
-  await fs.mkdir(targetDir, { recursive: true });
+  let relativeTarget = joinPath(subPath, safeName);
 
-  let targetPath = path.join(targetDir, safeName);
-  let relativeTarget = subPath
-    ? `${normalizeRelativePath(subPath)}/${safeName}`
-    : safeName;
-
-  try {
-    await fs.access(targetPath);
+  if (await storedFileExists(relativeTarget)) {
     const parsed = path.parse(safeName);
-    const stamped = `${parsed.name}-${Date.now()}${parsed.ext}`;
-    targetPath = path.join(targetDir, stamped);
-    relativeTarget = subPath
-      ? `${normalizeRelativePath(subPath)}/${stamped}`
-      : stamped;
-  } catch {
-    // file does not exist — use original name
+    relativeTarget = joinPath(subPath, `${parsed.name}-${Date.now()}${parsed.ext}`);
   }
 
-  await fs.writeFile(targetPath, buffer);
+  await saveStoredFile(buffer, relativeTarget);
   return normalizeRelativePath(relativeTarget);
-}
-
-export async function getAllDirectories(
-  relativePath = "",
-): Promise<string[]> {
-  const { items } = await listDirectory(relativePath);
-  const dirs: string[] = [];
-
-  if (relativePath) {
-    dirs.push(relativePath);
-  }
-
-  for (const item of items) {
-    if (item.type === "directory") {
-      const childPath = relativePath ? `${relativePath}/${item.name}` : item.name;
-      dirs.push(...(await getAllDirectories(childPath)));
-    }
-  }
-
-  return dirs.sort();
 }
 
 export function validateHtmlViewPath(relativePath: string): string {
@@ -247,3 +131,14 @@ export function validateHtmlViewPath(relativePath: string): string {
   }
   return normalized;
 }
+
+export async function assertHtmlFileExists(relativePath: string): Promise<string> {
+  const validatedPath = validateHtmlViewPath(relativePath);
+  if (!(await storedFileExists(validatedPath))) {
+    throw new Error("File not found");
+  }
+  return validatedPath;
+}
+
+// Kept for any code that still imports resolveUploadPath in local-only contexts.
+export { resolveUploadPath } from "@/lib/storage/local-store";

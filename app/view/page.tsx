@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import fs from "fs/promises";
 import { stripHtmlExtension } from "@/lib/file-names";
 import {
-  resolveUploadPath,
-  validateHtmlViewPath,
+  assertHtmlFileExists,
+  getFilePublicUrl,
 } from "@/lib/uploads";
 
 type ViewPageProps = {
@@ -26,16 +25,16 @@ export default async function ViewPage({ searchParams }: ViewPageProps) {
   }
 
   let validatedPath: string;
+  let iframeSrc: string;
   try {
-    validatedPath = validateHtmlViewPath(relativePath);
-    await fs.access(resolveUploadPath(validatedPath));
+    validatedPath = await assertHtmlFileExists(relativePath);
+    iframeSrc = await getFilePublicUrl(validatedPath);
   } catch {
     notFound();
   }
 
   const fileName = validatedPath.split("/").pop() ?? validatedPath;
   const displayName = stripHtmlExtension(fileName);
-  const iframeSrc = `/uploads/${validatedPath.split("/").map(encodeURIComponent).join("/")}`;
 
   return (
     <div className="flex h-screen flex-col bg-background">
