@@ -17,7 +17,13 @@ type UploadModalProps = {
   open: boolean;
   onClose: () => void;
   onSuccess: (path: string) => void;
+  /** Folder to save into (empty string = root). */
+  targetPath?: string;
 };
+
+function formatTargetFolder(path: string): string {
+  return path || "Root";
+}
 
 type UploadMode = "generate" | "direct";
 type GenerateStep = 1 | 2 | 3;
@@ -126,7 +132,12 @@ function UploadDropzone({
   );
 }
 
-export function UploadModal({ open, onClose, onSuccess }: UploadModalProps) {
+export function UploadModal({
+  open,
+  onClose,
+  onSuccess,
+  targetPath = "",
+}: UploadModalProps) {
   const [mode, setMode] = useState<UploadMode>("generate");
   const [step, setStep] = useState<GenerateStep>(1);
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -159,6 +170,9 @@ export function UploadModal({ open, onClose, onSuccess }: UploadModalProps) {
 
       const formData = new FormData();
       formData.append("file", file);
+      if (targetPath) {
+        formData.append("path", targetPath);
+      }
 
       try {
         const res = await fetch("/api/upload", {
@@ -175,7 +189,7 @@ export function UploadModal({ open, onClose, onSuccess }: UploadModalProps) {
         setUploading(false);
       }
     },
-    [onClose, onSuccess],
+    [onClose, onSuccess, targetPath],
   );
 
   const prompt = buildClaudePrompt(form);
@@ -217,7 +231,12 @@ export function UploadModal({ open, onClose, onSuccess }: UploadModalProps) {
           <DialogDescription>
             {mode === "generate"
               ? "Generate a study page with Claude, then upload it here."
-              : "Upload an existing HTML study file."}
+              : "Upload an existing HTML study file."}{" "}
+            Saving to{" "}
+            <span className="font-semibold text-foreground">
+              {formatTargetFolder(targetPath)}
+            </span>
+            .
           </DialogDescription>
         </DialogHeader>
 
@@ -428,7 +447,12 @@ export function UploadModal({ open, onClose, onSuccess }: UploadModalProps) {
             {step === 3 && (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Step 3 — Upload the HTML file you downloaded from Claude.
+                  Step 3 — Upload the HTML file you downloaded from Claude. It
+                  will be saved to{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatTargetFolder(targetPath)}
+                  </span>
+                  .
                 </p>
                 <UploadDropzone
                   uploading={uploading}

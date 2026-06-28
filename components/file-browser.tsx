@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UploadModal } from "@/components/upload-modal";
 
 type FileItem = {
   name: string;
@@ -83,6 +84,8 @@ export function FileBrowser() {
   const [directories, setDirectories] = useState<string[]>([]);
   const [selectedDest, setSelectedDest] = useState(ROOT_VALUE);
   const [actionLoading, setActionLoading] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
   const fetchDirectory = useCallback(async (path: string) => {
     setLoading(true);
@@ -248,13 +251,28 @@ export function FileBrowser() {
             </span>
           ))}
         </nav>
-        <Button
-          className="neo-btn neo-btn-primary rounded-lg"
-          onClick={() => setNewFolderOpen(true)}
-        >
-          + New Folder
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="neo-btn neo-btn-outline rounded-lg"
+            onClick={() => setUploadOpen(true)}
+          >
+            Upload HTML
+          </Button>
+          <Button
+            className="neo-btn neo-btn-primary rounded-lg"
+            onClick={() => setNewFolderOpen(true)}
+          >
+            + New Folder
+          </Button>
+        </div>
       </div>
+
+      {uploadMessage && (
+        <div className="mb-4 rounded-lg border-2 border-foreground bg-accent px-4 py-3 text-sm font-medium shadow-[2px_2px_0_0_#0a0a0a]">
+          {uploadMessage}
+        </div>
+      )}
 
       <p className="mb-4 text-sm text-muted-foreground">
         Current folder:{" "}
@@ -275,7 +293,7 @@ export function FileBrowser() {
         <div className="neo-card rounded-xl py-16 text-center text-muted-foreground">
           <p className="font-medium text-foreground">This folder is empty</p>
           <p className="mt-1 text-sm">
-            Upload an HTML file or create a folder to get started.
+            Upload an HTML file here or create a folder to get started.
           </p>
         </div>
       ) : (
@@ -590,6 +608,16 @@ export function FileBrowser() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <UploadModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        targetPath={currentPath}
+        onSuccess={async (path) => {
+          setUploadMessage(`"${path}" uploaded successfully.`);
+          await fetchDirectory(currentPath);
+        }}
+      />
     </div>
   );
 }
