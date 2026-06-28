@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { FolderIcon, FileIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { buildViewUrl, formatPathForDisplay, stripHtmlExtension } from "@/lib/file-names";
+import {
+  buildViewUrl,
+  formatPathForDisplay,
+  stripHtmlExtension,
+} from "@/lib/file-names";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -66,7 +70,10 @@ export function FileBrowser() {
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [moveTarget, setMoveTarget] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    path: string;
+    type: "file" | "directory";
+  } | null>(null);
   const [renameTarget, setRenameTarget] = useState<{
     path: string;
     name: string;
@@ -208,12 +215,13 @@ export function FileBrowser() {
       const res = await fetch("/api/files", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: deleteTarget }),
+        body: JSON.stringify({ path: deleteTarget.path }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to delete");
       setDeleteTarget(null);
       await fetchDirectory(currentPath);
+      await fetchDirectories();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete");
     } finally {
@@ -299,16 +307,28 @@ export function FileBrowser() {
                       <p className="text-sm text-muted-foreground">Folder</p>
                     </div>
                   </button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="neo-btn neo-btn-outline shrink-0 rounded-lg"
-                    onClick={() =>
-                      openRenameDialog(itemPath, item.name, "directory")
-                    }
-                  >
-                    Rename
-                  </Button>
+                  <div className="flex shrink-0 flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="neo-btn neo-btn-outline rounded-lg"
+                      onClick={() =>
+                        openRenameDialog(itemPath, item.name, "directory")
+                      }
+                    >
+                      Rename
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="neo-btn rounded-lg border-2 border-foreground bg-destructive text-white shadow-[2px_2px_0_0_#0a0a0a] hover:translate-x-px hover:translate-y-px hover:shadow-none"
+                      onClick={() =>
+                        setDeleteTarget({ path: itemPath, type: "directory" })
+                      }
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               );
             }
@@ -358,7 +378,9 @@ export function FileBrowser() {
                     variant="destructive"
                     size="sm"
                     className="neo-btn rounded-lg border-2 border-foreground bg-destructive text-white shadow-[2px_2px_0_0_#0a0a0a] hover:translate-x-px hover:translate-y-px hover:shadow-none"
-                    onClick={() => setDeleteTarget(itemPath)}
+                    onClick={() =>
+                      setDeleteTarget({ path: itemPath, type: "file" })
+                    }
                   >
                     Delete
                   </Button>
@@ -473,13 +495,22 @@ export function FileBrowser() {
       >
         <DialogContent className="neo-card neo-dialog-content max-w-md rounded-xl border-2 border-foreground shadow-[4px_4px_0_0_#0a0a0a] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Delete File</DialogTitle>
+            <DialogTitle className="text-xl font-bold">
+              {deleteTarget?.type === "directory"
+                ? "Delete Folder"
+                : "Delete File"}
+            </DialogTitle>
             <DialogDescription className="break-all">
               Are you sure you want to delete{" "}
               <span className="font-semibold text-foreground">
-                {deleteTarget ? formatPathForDisplay(deleteTarget) : ""}
+                {deleteTarget
+                  ? formatPathForDisplay(deleteTarget.path)
+                  : ""}
               </span>
-              ? This cannot be undone.
+              ?
+              {deleteTarget?.type === "directory"
+                ? " All files and subfolders inside will be permanently removed."
+                : " This cannot be undone."}
             </DialogDescription>
           </DialogHeader>
           <div className="neo-dialog-actions">

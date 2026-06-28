@@ -27,7 +27,9 @@ async function isDirectory(relativePath: string): Promise<boolean> {
   const prefix = `${pathname}/`;
   const { blobs, folders } = await list({ prefix, mode: "folded" });
   return (
-    blobs.some((blob) => !isHiddenBlobName(blobPathToRelative(blob.pathname))) ||
+    blobs.some(
+      (blob) => !isHiddenBlobName(blobPathToRelative(blob.pathname)),
+    ) ||
     folders.length > 0 ||
     (await blobExists(`${pathname}/.keep`))
   );
@@ -90,11 +92,30 @@ export async function blobDeleteFile(relativePath: string): Promise<void> {
   await del(toBlobPath(relativePath));
 }
 
+export async function blobDeleteDirectory(relativePath: string): Promise<void> {
+  const normalized = normalizeRelativePath(relativePath);
+  const prefix = `${toBlobPath(normalized)}/`;
+  const { blobs } = await list({ prefix, mode: "expanded" });
+  const pathnames = blobs.map((blob) => blob.pathname);
+
+  if (!pathnames.includes(prefix)) {
+    pathnames.push(prefix);
+  }
+
+  if (pathnames.length === 0) {
+    throw new Error("Folder not found");
+  }
+
+  await del(pathnames);
+}
+
 export async function blobGetFileUrl(relativePath: string): Promise<string> {
   return `/api/files/content?path=${encodeURIComponent(relativePath)}`;
 }
 
-export async function blobGetFileContent(relativePath: string): Promise<Buffer> {
+export async function blobGetFileContent(
+  relativePath: string,
+): Promise<Buffer> {
   const result = await get(toBlobPath(relativePath), { access: BLOB_ACCESS });
   if (!result || result.statusCode !== 200 || !result.stream) {
     throw new Error("File not found");

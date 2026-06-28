@@ -2,6 +2,7 @@ import path from "path";
 import { toStoredHtmlFileName } from "@/lib/file-names";
 import {
   createDirectory,
+  deleteStoredDirectory,
   deleteStoredFile,
   ensureStorageReady,
   getAllDirectories,
@@ -54,12 +55,22 @@ export {
   moveEntry,
 };
 
-export async function deleteFile(relativePath: string): Promise<void> {
+export async function deleteEntry(relativePath: string): Promise<void> {
   const normalized = normalizeRelativePath(relativePath);
-  if (!isHtmlFile(normalized)) {
-    throw new Error("Only HTML files can be deleted");
+  if (!normalized) {
+    throw new Error("Cannot delete the root folder");
   }
-  await deleteStoredFile(normalized);
+
+  const entryType = await getEntryType(normalized);
+  if (entryType === "file") {
+    if (!isHtmlFile(normalized)) {
+      throw new Error("Only HTML files can be deleted");
+    }
+    await deleteStoredFile(normalized);
+    return;
+  }
+
+  await deleteStoredDirectory(normalized);
 }
 
 export async function renameEntry(

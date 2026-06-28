@@ -1,5 +1,6 @@
 import {
   blobCreateDirectory,
+  blobDeleteDirectory,
   blobDeleteFile,
   blobFileExists,
   blobGetAllDirectories,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/storage/blob-store";
 import {
   localCreateDirectory,
+  localDeleteDirectory,
   localDeleteFile,
   localEnsureRoot,
   localFileExists,
@@ -63,6 +65,11 @@ export async function moveEntry(from: string, to: string): Promise<void> {
 export async function deleteStoredFile(relativePath: string): Promise<void> {
   if (useBlobStorage()) return blobDeleteFile(relativePath);
   return localDeleteFile(relativePath);
+}
+
+export async function deleteStoredDirectory(relativePath: string): Promise<void> {
+  if (useBlobStorage()) return blobDeleteDirectory(relativePath);
+  return localDeleteDirectory(relativePath);
 }
 
 export async function saveStoredFile(

@@ -92,6 +92,17 @@ export async function localDeleteFile(relativePath: string): Promise<void> {
   await fs.unlink(filePath);
 }
 
+export async function localDeleteDirectory(relativePath: string): Promise<void> {
+  const dirPath = resolveUploadPath(relativePath);
+  const stat = await fs.stat(dirPath);
+
+  if (!stat.isDirectory()) {
+    throw new Error("Not a folder");
+  }
+
+  await fs.rm(dirPath, { recursive: true, force: true });
+}
+
 export async function localSaveFile(
   buffer: Buffer,
   relativePath: string,
